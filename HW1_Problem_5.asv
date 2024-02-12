@@ -83,7 +83,8 @@ for i = 1:length(radius_steps)
     end
 end
 
-r_alpha_ratio =  radius_steps/alpha; % After Figure 8.4
+normalized_displacement = displacement.*strain;
+r_alpha_ratio =  radius_steps/alpha;
 
 figure(3)
 clf
@@ -101,7 +102,6 @@ hold on
 plot(radius_steps,displacement(1,:),'Color','Blue','LineWidth',1)
 plot(radius_steps,displacement(3,:),'Color','Red','LineWidth',1)
 legend('Horizontal Displacement','Vertical Displacement','Location','Southeast')
-xlabel('Distance from Lake Center (meters)')
+xlabel('Radius (meters)')
 ylabel('Displacement')
-title('Surface Displacements from Pu’u’Ō’ō Lava Lake (Meters)')
-subtitle('After Filling At 400,000 Cubic Meters Per Day, for One Day')
+title('Displacement from a Cylindrical Load of Radius \alpha')
