@@ -2,7 +2,7 @@
 
 clear all
 
-alpha = 200; % Meters
+alpha = 200; % Radius of the Load, Meters
 fill_rate = 400000; % Cubic Meters Per Day
 
 depth_per_day = fill_rate / (pi * alpha.^2); % Meters Per Day
@@ -92,7 +92,7 @@ plot(r_alpha_ratio,displacement(1,:),'Color','Blue','LineWidth',1)
 plot(r_alpha_ratio,displacement(3,:),'Color','Red','LineWidth',1)
 legend('Horizontal Displacement','Vertical Displacement','Location','Southeast')
 xlabel('r / \alpha')
-ylabel('Displacement')
+ylabel('Displacement (Meters)')
 title('Displacement from a Cylindrical Load of Radius \alpha')
 
 figure(4)
@@ -101,7 +101,44 @@ hold on
 plot(radius_steps,displacement(1,:),'Color','Blue','LineWidth',1)
 plot(radius_steps,displacement(3,:),'Color','Red','LineWidth',1)
 legend('Horizontal Displacement','Vertical Displacement','Location','Southeast')
-xlabel('Distance from Lake Center (meters)')
-ylabel('Displacement')
+xlabel('Distance from Lake Center (Meters)')
+ylabel('Displacement (Meters)')
 title('Surface Displacements from Pu’u’Ō’ō Lava Lake (Meters)')
 subtitle('After Filling At 400,000 Cubic Meters Per Day, for One Day')
+
+%% 5d
+% Creating the model grid
+X_range = -1000:50:1000;
+Y_range = -1000:50:1000;
+[X,Y] = meshgrid(X_range,Y_range);
+
+% Creating a grid of the radius for every point, for the horizontal
+% deformations
+Radius = sqrt(X.^2 + Y.^2);
+[rows, columns] = size(Radius);
+
+% Creating a deformation grid temporarily just filled with zeros
+Vertical_Deformation_Near = zeros(rows,columns);
+
+% Loops through every index (i,j) in the grid matrix and calculates a
+% vertical deformation value
+for i = 1:rows
+    for j = 1:columns
+        if Radius(i,j) <= alpha
+            a = [0.5, -0.5];
+            b = [1];
+            scaling_factor = Pz * (1 - (2*v)) / (4 * G * alpha);
+            z = (Radius(i,j)^2) / (alpha^2);
+            Vertical_Deformation_Near(i,j) = scaling_factor * 4 * (alpha^2) * (1-v) * real(hypergeom(a, b, z)) / (1-2*v);
+        elseif Radius(i,j) > alpha
+            a = [0.5, 0.5];
+            b = [2];
+            scaling_factor = Pz * (alpha^2) * (1 - 2*v) / (4*G);
+            z = (alpha^2) / (Radius(i,j)^2);
+            Vertical_Deformation_Near(i,j) = scaling_factor * 2 * (1-v) * real(hypergeom(a, b, z)) / ((1-2*v) * Radius(i,j));
+        end
+    end
+end
+
+figure(5)
+surf(X,Y,Vertical_Deformation_Near)
