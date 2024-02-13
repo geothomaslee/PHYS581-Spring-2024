@@ -157,7 +157,7 @@ Vertical_Deformation = zeros(rows,columns);
 % Loops through every index (i,j) in the grid matrix and calculates a
 % vertical deformation value
 
-num_iterations = 2; % Number of iterations, for testing. Minimum 2
+num_iterations = 24; % Number of iterations, for testing. Minimum 2
 
 for p = 2:num_iterations
     Vertical_Deformation = zeros(rows,columns);
@@ -224,6 +224,7 @@ for p = 2:num_iterations
     xlim([-1.1*alpha,1.1*alpha])
     ylim([-1.1*alpha,1.1*alpha])
     zlabel('Depth (m)')
+    %txt = ['Depth of Lava Lake: ' num2str(depth(p))]
     title(['Depth of Lava Lake: ' num2str(depth(p)) 'm'])
     
     subplot(2,2,3)
@@ -236,16 +237,6 @@ for p = 2:num_iterations
     xlabel('X (m)')
     ylabel('Y (m)')
     title('Horizontal Deformation Over Time')
-
-    subplot(2,2,4)
-    deformation_scale = 2000 / max_displacement
-    Full_X_Def = X + (X_Deformation * deformation_scale)
-    Full_Y_Def = Y + (Y_Deformation * deformation_scale)
-    surf(Full_X_Def,Full_Y_Def,Vertical_Deformation)
-    zlim([max_z,0])
-
-    title('Full Deformation')
-    subtitle('Displacements Exaggerated by 10^6, but Original Position to Scale')
 
     % Supertitle for all the subplots
     txt = ['Deformation from Lava in Pu u Ōnō Lava Lake, Hour ' num2str(p-1)]
