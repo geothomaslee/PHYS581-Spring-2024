@@ -112,6 +112,32 @@ X_range = -1000:50:1000;
 Y_range = -1000:50:1000;
 [X,Y] = meshgrid(X_range,Y_range);
 
+days = 20;
+decay = 150;
+wavelength = 0.1
+time_steps = [0:1:days*24];
+initial_depth = 0;
+depth = zeros(1,length(time_steps)) + initial_depth;
+inflow_base_rate = 400000;
+inflow = 400000 * sin(wavelength*time_steps).*exp(time_steps / -decay);
+depth_change = inflow / (pi * alpha.^2); % Meters Per Hour
+
+for i = 2:length(depth)
+    depth(i) = depth(i-1) + depth_change(i);
+end
+
+pressure = density * gravity * depth * -1;
+max_pressure = max(abs(pressure));
+
+% Calculating the maximum displacement using the max pressure at the center
+a = [0.5, -0.5];
+b = [1];
+scaling_factor = max_pressure * (1 - (2*v)) / (4 * G * alpha);
+z = 0;
+max_displacement = scaling_factor * 4 * (alpha^2) * (1-v) * real(hypergeom(a, b, z)) / (1-2*v);
+
+%% Break
+
 % Creating a grid of the radius for every point, for the horizontal
 % deformations
 Radius = sqrt(X.^2 + Y.^2);
@@ -122,23 +148,50 @@ Vertical_Deformation_Near = zeros(rows,columns);
 
 % Loops through every index (i,j) in the grid matrix and calculates a
 % vertical deformation value
-for i = 1:rows
-    for j = 1:columns
-        if Radius(i,j) <= alpha
-            a = [0.5, -0.5];
-            b = [1];
-            scaling_factor = Pz * (1 - (2*v)) / (4 * G * alpha);
-            z = (Radius(i,j)^2) / (alpha^2);
-            Vertical_Deformation_Near(i,j) = scaling_factor * 4 * (alpha^2) * (1-v) * real(hypergeom(a, b, z)) / (1-2*v);
-        elseif Radius(i,j) > alpha
-            a = [0.5, 0.5];
-            b = [2];
-            scaling_factor = Pz * (alpha^2) * (1 - 2*v) / (4*G);
-            z = (alpha^2) / (Radius(i,j)^2);
-            Vertical_Deformation_Near(i,j) = scaling_factor * 2 * (1-v) * real(hypergeom(a, b, z)) / ((1-2*v) * Radius(i,j));
+
+for p = 2:length(pressure)
+    Vertical_Deformation_Near = zeros(rows,columns);
+    Pz = pressure(p);
+
+    for i = 1:rows
+        for j = 1:columns
+            if Radius(i,j) <= alpha
+                a = [0.5, -0.5];
+                b = [1];
+                scaling_factor = Pz * (1 - (2*v)) / (4 * G * alpha);
+                z = (Radius(i,j)^2) / (alpha^2);
+                Vertical_Deformation_Near(i,j) = scaling_factor * 4 * (alpha^2) * (1-v) * real(hypergeom(a, b, z)) / (1-2*v);
+            elseif Radius(i,j) > alpha
+                a = [0.5, 0.5];
+                b = [2];
+                scaling_factor = Pz * (alpha^2) * (1 - 2*v) / (4*G);
+                z = (alpha^2) / (Radius(i,j)^2);
+                Vertical_Deformation_Near(i,j) = scaling_factor * 2 * (1-v) * real(hypergeom(a, b, z)) / ((1-2*v) * Radius(i,j));
+            end
         end
+    end
+
+    figure(5)
+    clf
+    ylim auto, xlim auto
+    surf(X,Y,Vertical_Deformation_Near)
+    colormap winter;
+    title('Vertical Displacements from Pu’u’Ō’ō Lava Lake (Meters)')
+    txt = ['Hour ' num2str(p-1)  ', \sigma = ' num2str(Pz) ', Depth = ' num2str(depth(p))];
+    subtitle(txt)
+    zlabel('Displacement (m)')
+    max_z = (-1.1 * max_displacement);
+    zlim([max_z,0])
+    
+    filename = ['Vertical_Displacement_Animation.gif'];
+    drawnow 
+    frame = getframe(gcf); 
+    im = frame2im(frame); 
+    [imind,cm] = rgb2ind(im,256);
+    if p == 2; 
+        imwrite(imind,cm,filename,'gif', 'DelayTime',0.02,'Loopcount',inf); 
+    else
+        imwrite(imind,cm,filename,'gif','WriteMode','append'); 
     end
 end
 
-figure(5)
-surf(X,Y,Vertical_Deformation_Near)
