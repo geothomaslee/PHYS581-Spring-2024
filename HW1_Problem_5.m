@@ -133,6 +133,12 @@ for i = 2:length(depth)
     depth(i) = depth(i-1) + depth_change(i);
 end
 
+figure(7)
+plot(time_steps,depth)
+xlabel('Time (hours)')
+ylabel('Depth (m)')
+title('Model Sinusoidal Filling and Draining Lava Lake')
+
 % Pressure, and max pressure
 pressure = density * gravity * depth * -1;
 max_pressure = max(abs(pressure));
@@ -157,7 +163,7 @@ Vertical_Deformation = zeros(rows,columns);
 % Loops through every index (i,j) in the grid matrix and calculates a
 % vertical deformation value
 
-num_iterations = 2; % Number of iterations, for testing. Minimum 2
+num_iterations = length(pressure); % Number of iterations, for testing. Minimum 2
 
 for p = 2:num_iterations
     Vertical_Deformation = zeros(rows,columns);
@@ -201,7 +207,7 @@ for p = 2:num_iterations
     surf(X,Y,Vertical_Deformation)
     colormap winter;
     title('Vertical Displacement')
-    txt = ['\sigma_z = ' num2str(Pz) ' Pa'];
+    txt = ['\sigma_z = ' num2str(Pz/1000000) ' MPa'];
     subtitle(txt)
     zlabel('Displacement (m)')
     max_z = (-1.1 * max_displacement);
@@ -225,6 +231,7 @@ for p = 2:num_iterations
     ylim([-1.1*alpha,1.1*alpha])
     zlabel('Depth (m)')
     title(['Depth of Lava Lake: ' num2str(depth(p)) 'm'])
+    subtitle(['Maximum Depth: ' num2str(max_depth) 'm'])
     
     subplot(2,2,3)
     quiver_scale = 100000;
@@ -235,20 +242,24 @@ for p = 2:num_iterations
     ylim([-500,500])
     xlabel('X (m)')
     ylabel('Y (m)')
-    title('Horizontal Deformation Over Time')
+    title('Horizontal Deformation')
+    subtitle('Scaled by 10^5')
 
     subplot(2,2,4)
-    deformation_scale = 2000 / max_displacement
-    Full_X_Def = X + (X_Deformation * deformation_scale)
-    Full_Y_Def = Y + (Y_Deformation * deformation_scale)
+    deformation_scale = 2000 / max_displacement;
+    Full_X_Def = X + (X_Deformation * deformation_scale);
+    Full_Y_Def = Y + (Y_Deformation * deformation_scale);
     surf(Full_X_Def,Full_Y_Def,Vertical_Deformation)
     zlim([max_z,0])
 
     title('Full Deformation')
-    subtitle('Displacements Exaggerated by 10^6, but Original Position to Scale')
+    subtitle('X/Y Displacements Exaggerated by 10^6')
+    zlabel('Displacement (m)')
 
     % Supertitle for all the subplots
-    txt = ['Deformation from Lava in Pu u Ōnō Lava Lake, Hour ' num2str(p-1)]
+    R = mod(p, 24);
+    Q = floor(p./24) + 1;
+    txt = ['Deformation from Lava in Pu u Ōnō Lava Lake, Day ' num2str(Q) ' Hour ' num2str(R)];
     sgtitle(txt)
     
     filename = ['Vertical_Displacement_Animation.gif'];
