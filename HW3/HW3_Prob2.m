@@ -1,7 +1,7 @@
 %% Question 2)
 clear all
 
-V_steady = 0.1; % Initial velocity (m/s)
+V_steady = 1 / 100; % Initial velocity (m/s)
 mu_steady = 0.6; % Initial frictional constant
 a = 0.005;
 b = 0.007;
@@ -14,8 +14,9 @@ x_steady = 0; % Initial position of slider
 
 psi_steady = Dc / V_steady; % Slip-rate
 
-time_step = 0.01; % Time step in seconds
-times = 0:time_step:10; % Times (seconds)
+run_time = 4
+dt = 0.01; % Time step in seconds
+times = 0:dt:run_time; % Times (seconds)
 
 psi = zeros(1,length(times));
 V = zeros(1,length(times));
@@ -27,11 +28,11 @@ V_load = 10*V_steady;
 
 for t=1:length(times)
     if t == 1
-        V(t) = V_steady; % at t=0, velocity suddenly jumps up to 10*V_steady
+        V(t) = V_steady; % at t=0, the slider hasn't accelerated yet, it has the same initial velocity
 
         psi(t) = V_steady / Dc; % Initially, the slider isn't moving
         
-        dpsi_dt(t) = 1 - (V(t) * psi_steady / Dc);
+        dpsi_dt(t) = 1 - (V(t) * psi(t) / Dc);
         
         mu(t) = mu_steady + (a * log(V(t)/V_steady)) + (b*log(V_steady*psi(t) / Dc)); % Mu is calculated at this step
          
@@ -39,26 +40,36 @@ for t=1:length(times)
 
         Fs(t) = Fs_steady; % The spring is unstretched after 0 time
     else
-        psi(t) = psi(t-1) + dpsi_dt(t)*time_step; % Our new psi is calculated using the dpsi_dt we calculated in the last step
-        x(t) = x_steady + (V_load*time_step) - (V(t-1)*time_step); % V_load stretches the string, but as the slider moves it will also change the stretch
-        Fs(t) = K_over_A*x(t); % The spring has been stretched by some amount
         frictional_force = mu(t-1) * sigma; % Our current frictional force is estimated from the previous time stamp's coefficient of friction
-
-        % If our spring force is stronger than the friction, our slider
-        % will accelerate
-        if Fs(t) > frictional_force
-            V(t) = V(t-1) +((time_step/m_over_A)*(Fs(t) - frictional_force)); % Our new velocity is calculated from the difference in force
+        % If our spring force is stronger than the friction, our slider will accelerate
+        if Fs(t-1) > frictional_force
+            % Do nothing
         else
-            V(t) = V(t-1); % If not, the velocity just remains constant
+            frictional_force = Fs(t-1); % If not, the frictional force just matches the spring force (avoid backwards acceleration)
         end
- 
+
+        V(t) = V(t-1) + (dt/m_over_A)*(Fs(t-1) - frictional_force);
+
+        x(t) = x(t-1) + (V_load - V(t-1))*dt;
+        Fs(t) = Fs_steady + (K_over_A * x(t));
+
+        psi(t) = psi(t-1) + (dpsi_dt(t-1) * dt);
+
         mu(t) = mu_steady + (a * log(V(t)/V_steady)) + (b*log(V_steady*psi(t) / Dc)); % Now that the slider's velocity 
         % is changing, so should its coefficient of friction
+
+        dpsi_dt(t) = 1 - (V(t) * psi(t) / Dc);
 
     end
 end
 
 figure(1), clf
-plot(times,mu)
+steady_times = [(-0.5*run_time),0]
+steady_mu_vals = mu_steady*ones(length(steady_times))
+plot(steady_times,steady_mu_vals,'b-')
+hold on
+plot(times,mu,'b-')
+xlabel('Time (seconds')
+ylabel('\mu')
 
 
