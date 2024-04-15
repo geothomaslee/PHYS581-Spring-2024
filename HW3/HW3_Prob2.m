@@ -14,7 +14,7 @@ x_steady = 0; % Initial position of slider
 
 psi_steady = Dc / V_steady; % Slip-rate
 
-run_time = 4
+run_time = 30
 dt = 0.01; % Time step in seconds
 times = 0:dt:run_time; % Times (seconds)
 
@@ -64,12 +64,33 @@ for t=1:length(times)
 end
 
 figure(1), clf
-steady_times = [(-0.5*run_time),0]
-steady_mu_vals = mu_steady*ones(length(steady_times))
-plot(steady_times,steady_mu_vals,'b-')
+
+tt = (times*Dc) / V_steady
+
+plot(tt,V-V_steady)
+
+
+%% Testing functionn
+
+dt = 0.01
+times = 0:dt:4
+
+steady_times = -2:1:0
+steady_mu = mu_steady*ones(length(steady_times))
+
+figure(2), clf
+plot(steady_times,steady_mu,'k-')
 hold on
-plot(times,mu,'b-')
-xlabel('Time (seconds')
-ylabel('\mu')
+K_over_As = [1e9:0.5e9:5e9]
+
+for i = 1:length(K_over_As)
+    K_over_A = K_over_As(i)
+    friction = slider_function(times,dt,K_over_A)
+    plot(times,friction)
+    hold on
+end
+
+
+
 
 
